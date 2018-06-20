@@ -12,13 +12,27 @@ bubble(abpm10, zcol="pm10.obs", scales=list(draw=T), main="Bubble Plot of ABPM10
 ############ Q1 ###################
 temp = abpm10
 temp$pm10.obs = log10(abpm10$pm10.obs)
+
+par(mfrow=c(1,2))
+hist(abpm10$pm10.obs, freq=F, main = 'ORIGINAL ABPM10', xlab = 'Obs')
+lines(density(abpm10$pm10.obs), col='red')
+hist(temp$pm10.obs, freq=F, main = 'LOG TRANSFORMED ABPM10', xlab = 'Obs')
+lines(density(temp$pm10.obs), col='blue')
 skewness(abpm10$pm10.obs)
 skewness(temp$pm10.obs)
 
+par(mfrow=c(1,2))
+qqnorm(abpm10$pm10.obs, main='ORIGINAL ABPM10', col = 'red')
+qqline(abpm10$pm10.obs)
+
+qqnorm(temp$pm10.obs, main='LOG TRANSFORMED ABPM10', col = 'blue')
+qqline(temp$pm10.obs)
+
 plot(abpm10.ev, model=abpm10.mv)
 par(mfrow=c(1,2))
-boxplot(temp$pm10.obs)
-boxplot(abpm10$pm10.obs)
+
+boxplot(abpm10$pm10.obs, main='ORIGINAL ABPM10')
+boxplot(temp$pm10.obs, main='LOG TRANSFORMED ABPM10')
 
 ########### Q2 ###################
 cut_seq = seq(400, 2000, by = 50)
