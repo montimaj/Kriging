@@ -67,8 +67,8 @@ for (i in 2:rows) {
 plot(min_variogram[[5]], model=min_variogram[[6]], type='l')
 
 #################### Q3 ####################
-cutoff = min_variogram[[1]]  #1050
-width = min_variogram[[2]]   #50
+cutoff = 1000 #min_va #riogram[[1]]  #1050
+width = 50 #min_variogram[[2]]   #50
 
 models = c('Exp','Sph','Gau','Mat','Ste','Cir','Lin','Bes','Pen','Per','Wav')
 results = array(list(), c(length(models),4))
@@ -83,12 +83,21 @@ for (model in models) {
 	i = i + 1
 }
 
+xy = expand.grid(x=seq(3800, 5000, by=1), y=seq(2500,3600, by=1))
+xys = SpatialPoints(xy)
+gridded(xys) = TRUE
+proj4string(xys) = CRS("+init=epsg:3035 +units=km")
+plot(xys, axes=T)
+points(as.data.frame(abpm10)[,4:5], col=2, pch=19)
+pmk = krige(pm10.obs~1, abpm10, xys, model=results[[1,4]])
+
+ceShape.shp = readShapePoly("CentralEuropeShape.shp")
+proj4string(ceShape.shp) = CRS("+init=epsg:3035 +units=km")
+
+spl1 = list("sp.polygons", ceShape.shp, first = FALSE) 
+spl2 = list("sp.points", pch="+", abpm10, col=2, cex=2)
+spl = list(spl1, spl2)
+spplot(pmk, "var1.pred", sp.layout = spl, scales=list(draw=TRUE), main="Kriged prediction")
+spplot(pmk, "var1.var", sp.layout = spl, scales=list(draw=TRUE), main="Kriging Variance")
+
 #plot(results[[3, 3]], model=results[[2, 4]], type='l')
-
-
-
-
-
-
-
-
