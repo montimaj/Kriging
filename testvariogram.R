@@ -97,7 +97,8 @@ proj4string(ceShape.shp) = CRS("+init=epsg:3035 +units=km")
 spl1 = list("sp.polygons", ceShape.shp, first = FALSE) 
 spl2 = list("sp.points", pch="+", abpm10, col=2, cex=2)
 spl = list(spl1, spl2)
-spplot(pmk, "var1.pred", sp.layout = spl, scales=list(draw=TRUE), main="Kriged prediction")
-spplot(pmk, "var1.var", sp.layout = spl, scales=list(draw=TRUE), main="Kriging Variance")
+labels1 <- layer(sp.text(coordinates(ceShape.shp), txt = ceShape.shp$NAME_ENGLI, pos = 1))
+spplot(pmk, "var1.pred", sp.layout = spl, scales=list(draw=TRUE), main="Kriged prediction") + labels1
+spplot(pmk, "var1.var", sp.layout = spl, scales=list(draw=TRUE), main="Kriging Variance") + labels1
 
 #plot(results[[3, 3]], model=results[[2, 4]], type='l')
