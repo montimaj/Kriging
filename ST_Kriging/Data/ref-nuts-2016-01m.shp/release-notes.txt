@@ -1,0 +1,26 @@
+NUTS 2016
+--------
+It is pre-release, it is not meant to get into production.
+
+Formats:
+* file geodatabase (ESRI)
+* shapefile (ESRI)
+* geoJSON
+* topoJSON
+* geobuf (geojson compressed into protocol buffers https://github.com/mapbox/geobuf)
+
+Extent: Europe EU28 + EFTA + candidate countries
+
+Resolutions: 60M.
+
+Projection systems:
+	EPSG:4258 (ETRS 1989, coordinates in decimal degrees),
+	EPSG:4326 (WGS84, coordinates in decimal degrees),
+	EPSG:3035 (ETRS 1989 in Lambert Azimutal projection with centre in E52N10, coordinates in meters),
+	EPSG:3857 (WGS84 Web Mercator Auxiliary Sphere, coordinates in meters)
+
+Files in different projections can be distinguished by 4-digit-EPSG-code suffixes (_4258,_4326,_3035,_3857)
+
+Release notes:
+2018-05-29 NUTS 2016 release.
+
