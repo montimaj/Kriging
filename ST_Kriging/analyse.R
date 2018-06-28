@@ -7,6 +7,7 @@ library(spacetime)
 library(rgeos)
 library(raster)
 
+
 ####### Date function ########
 to_POSIX = function(date) {
   day = substring(date, 1, 2)
@@ -41,9 +42,9 @@ min_lon = min(abpm10$lon)
 
 
 ################# SPATIO-TEMPORAL ANALYSIS CODE  ############
-abpm10 = read.csv('..//AirData.csv')
+abpm10 = read.csv('Data//AirData.csv')
 coordinates(abpm10) = ~easting + northing
-proj4string(abpm10) = CRS("+init=epsg:3035 +units=m")
+proj4string(abpm10) = CRS("+init=epsg:3035 +units=km")
 plot(abpm10, axes=T)
 bubble(abpm10, zcol="pm10.obs", scales=list(draw=T), main="Bubble Plot of ABPM10")
 
@@ -62,9 +63,8 @@ sk_abpm10_log = skewness(abpm10_log$pm10.obs)
 ######### SPATIO-TEMPORAL KRIGING ##############
 
 #### SPATIAL PART ####
-#abpm10_log = 
-abpm10.UTM = spTransform(abpm10_log,CRS("+init=epsg:3035")) 
-abpm10_sp = SpatialPoints(abpm10.UTM@coords,CRS("+init=epsg:3035")) 
+abpm10.UTM = spTransform(abpm10_log,CRS("+init=epsg:3035 +units=km")) 
+abpm10_sp = SpatialPoints(abpm10.UTM@coords,CRS("+init=epsg:3035 +units=km")) 
 #dupl = zerodist(abpm10_sp)
 #abpm10_df = data.frame(pm10.obs=abpm10.UTM$pm10.obs[-dupl[,2]])
 abpm10_df = data.frame(pm10.obs=abpm10.UTM$pm10.obs)
@@ -83,18 +83,18 @@ plot(var,wireframe=T)
 
 ###### SPATIOTEMPORAL MODELS #########
 
-pars.l <- c(sill.s = 0, range.s = 500000, nugget.s = 0, sill.t = 0, range.t = 1, nugget.t = 0, sill.st = 0, range.st = 10000, nugget.st = 0)
-pars.u <- c(sill.s = 0.9, range.s = 123000, nugget.s = 0.125,sill.t = 0.9, range.t = 10, nugget.t = 0.125, sill.st = 0.6, range.st = 123000, nugget.st = 0.1) 
+pars.l <- c(sill.s = 0, range.s = 500, nugget.s = 0, sill.t = 0, range.t = 1, nugget.t = 0, sill.st = 0, range.st = 100, nugget.st = 0)
+pars.u <- c(sill.s = 0.9, range.s = 123, nugget.s = 0.125,sill.t = 0.9, range.t = 10, nugget.t = 0.125, sill.st = 0.6, range.st = 123, nugget.st = 0.1) 
 
 
 #### SEPARABLE MODEL ####
-separable = vgmST("separable", space = vgm(0.9,"Exp", 123000, 0.125),time = vgm(0.9,"Exp", 10, 0.125), sill=0.6)  
+separable = vgmST("separable", space = vgm(0.9,"Exp", 123, 0.125),time = vgm(0.9,"Exp", 10, 0.125), sill=0.6)  
 separable_Vgm = fit.StVariogram(var, separable, fit.method=11,method="L-BFGS-B", stAni=5, lower=pars.l,upper=pars.u)
 extractPar(separable_Vgm)
 plot(var, separable_Vgm, map=F)
 
 #### PRODUCTSUM MODEL ####
-prodSumModel = vgmST("productSum",space = vgm(0.9, "Exp", 123000, 0.125),time = vgm(0.9, "Exp", 10, 0.125),k = 0.55) 
+prodSumModel = vgmST("productSum",space = vgm(0.9, "Exp", 123, 0.125),time = vgm(0.9, "Exp", 10, 0.125),k = 0.55) 
 prodSumModel_Vgm = fit.StVariogram(var, prodSumModel,method = "L-BFGS-B",lower=pars.l)
 plot(var, prodSumModel_Vgm, map=F)
 
@@ -104,7 +104,7 @@ metric_Vgm = fit.StVariogram(var, metric, method="L-BFGS-B",lower=pars.l)
 plot(var, metric_Vgm, map=F)
 
 #### SUM-METRIC MODEL ####
-sumMetric = vgmST("sumMetric", space = vgm(0.9,"Exp", 123000, 0.125),time = vgm(0.9,"Exp", 10, 0.125), joint = vgm(0.9,"Exp", 123000, nugget=0.125), stAni=50)
+sumMetric = vgmST("sumMetric", space = vgm(0.9,"Exp", 123, 0.125),time = vgm(0.9,"Exp", 10, 0.125), joint = vgm(0.9,"Exp", 123, nugget=0.125), stAni=50)
 sumMetric_Vgm = fit.StVariogram(var, sumMetric, method="L-BFGS-B",lower=pars.l,upper=pars.u,tunit="days")
 plot(var, sumMetric_Vgm, map=T)
 
@@ -117,27 +117,30 @@ plot(var, sumMetric_Vgm, wireframe=T, scales=list(arrows=F, z = list(distance = 
 plot(var,metric_Vgm,wireframe=T, scales=list(arrows=F, z = list(distance = 5))) 
 
 #### GENERATE MAPS ####
-xy = expand.grid(x=seq(2500, 6000, by=50), y=seq(1500,4000, by=50))
+xy = expand.grid(x=seq(2500, 6000, by=1), y=seq(1500,4000, by=1))
 xys = SpatialPoints(xy)
 gridded(xys) = TRUE
-proj4string(xys) = CRS("+init=epsg:3035 +units=m")
-timeDF = spTransform(timeDF, CRS("+init=epsg:3035 +units=m"))
+proj4string(xys) = CRS("+init=epsg:3035 +units=km")
+timeDF = spTransform(timeDF, CRS("+init=epsg:3035 +units=km"))
 plot(xys, axes=T)
-points(as.data.frame(abpm10_log)[,4:5], col=2, pch=19)
+points(as.data.frame(abpm10_log)[,4:5]*1000, col=2, pch=19)
 
 
 eu = shapefile("Data//Euro//EClip.shp")
-eu.UTM = spTransform(eu, CRS("+init=epsg:3035 +units=m"))
-plot(eu)
-plot(abpm10.UTM,add=T,col="red") 
+eu.UTM = spTransform(eu, CRS("+init=epsg:3035 +units=km"))
+abpm10_log = spTransform(abpm10_log, CRS("+init=epsg:3035 +units=km"))
+#plot(eu)
+#plot(abpm10.UTM,add=T,col="red") 
 tm.grid = seq(as.POSIXct('2009-04-15 00:00 CET'),as.POSIXct('2009-05-31 00:00 CET'), length.out=5)
-sp.grid.UTM = spsample(eu.UTM, n=1500, type="random") 
-grid.ST = STF(xys,tm.grid) 
+#sp.grid.UTM = spsample(eu.UTM, n=2000, type="random") 
+grid.ST = STF(xys, tm.grid) 
 spl1 = list("sp.polygons", eu, first = FALSE) 
 spl2 = list("sp.points", pch="+", abpm10_log, col=2, cex=2)
 spl = list(spl1, spl2)
 labels1 <- layer(sp.text(coordinates(eu), txt = eu$CNTR_CODE, pos = 1))
 
 #### INTERPOLATE ####
-predicted <- krigeST(pm10.obs~1, data=timeDF, modelList=sumMetric_Vgm, newdata=grid.ST, computeVar = TRUE) 
+predicted <- krigeST(pm10.obs~1, data=timeDF, modelList=sumMetric_Vgm, newdata=grid.ST) 
+predicted$var1.pred = exp(predicted$var1.pred)
+#abpm10.ST <- STFDF(xys, tm.grid, data.frame(pm10.inter = predicted$var1.pred))
 stplot(predicted, sp.layout = spl, scales=list(draw=TRUE), main="Kriged prediction") + labels1
