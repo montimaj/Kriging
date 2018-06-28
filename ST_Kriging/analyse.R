@@ -84,46 +84,55 @@ plot(var,wireframe=T)
 ###### SPATIOTEMPORAL MODELS #########
 
 pars.l <- c(sill.s = 0, range.s = 500, nugget.s = 0, sill.t = 0, range.t = 1, nugget.t = 0, sill.st = 0, range.st = 100, nugget.st = 0)
-pars.u <- c(sill.s = 0.9, range.s = 123, nugget.s = 0.125,sill.t = 0.9, range.t = 10, nugget.t = 0.125, sill.st = 0.6, range.st = 123, nugget.st = 0.1) 
+pars.u <- c(sill.s = 0.9, range.s = 400, nugget.s = 0.125,sill.t = 0.9, range.t = 10, nugget.t = 0.125, sill.st = 0.6, range.st = 123, nugget.st = 0.1) 
 
 
 #### SEPARABLE MODEL ####
-separable = vgmST("separable", space = vgm(0.9,"Exp", 123, 0.125),time = vgm(0.9,"Exp", 10, 0.125), sill=0.6)  
+separable = vgmST("separable", space = vgm(0.9,"Exp", 400, 0.125),time = vgm(0.9,"Exp", 10, 0.125), sill=0.6)  
 separable_Vgm = fit.StVariogram(var, separable, fit.method=11,method="L-BFGS-B", stAni=5, lower=pars.l,upper=pars.u)
 extractPar(separable_Vgm)
 plot(var, separable_Vgm, map=F)
 
 #### PRODUCTSUM MODEL ####
-prodSumModel = vgmST("productSum",space = vgm(0.9, "Exp", 123, 0.125),time = vgm(0.9, "Exp", 10, 0.125),k = 0.55) 
+prodSumModel = vgmST("productSum",space = vgm(0.9, "Exp", 400, 0.125),time = vgm(0.9, "Exp", 10, 0.125),k = 0.55) 
 prodSumModel_Vgm = fit.StVariogram(var, prodSumModel,method = "L-BFGS-B",lower=pars.l)
+extractPar(prodSumModel_Vgm)
 plot(var, prodSumModel_Vgm, map=F)
 
 #### METRIC MODEL ####
-metric = vgmST("metric", joint = vgm(0.9,"Exp", 100, 0.125), stAni=50)
+metric = vgmST("metric", joint = vgm(0.9,"Exp", 400, 0.125), stAni=50)
 metric_Vgm = fit.StVariogram(var, metric, method="L-BFGS-B",lower=pars.l)
+extractPar(metric_Vgm)
 plot(var, metric_Vgm, map=F)
 
 #### SUM-METRIC MODEL ####
-sumMetric = vgmST("sumMetric", space = vgm(0.9,"Exp", 123, 0.125),time = vgm(0.9,"Exp", 10, 0.125), joint = vgm(0.9,"Exp", 123, nugget=0.125), stAni=50)
+sumMetric = vgmST("sumMetric", space = vgm(0.9,"Exp", 400, 0.125),time = vgm(0.9,"Exp", 10, 0.125), joint = vgm(0.9,"Exp", 123, nugget=0.125), stAni=50)
 sumMetric_Vgm = fit.StVariogram(var, sumMetric, method="L-BFGS-B",lower=pars.l,upper=pars.u,tunit="days")
-plot(var, sumMetric_Vgm, map=T)
+extractPar(sumMetric_Vgm)
+plot(var, sumMetric_Vgm, map=F)
 
 #### COMPARE MODELS ####
-X11()
-par(mfrow=c(2,2))
+attr(separable_Vgm, "MSE")
+attr(prodSumModel_Vgm, "MSE")
+attr(metric_Vgm, "MSE")
+attr(sumMetric_Vgm, "MSE")
+
+
+
 plot(var, wireframe=T, scales=list(arrows=F, z = list(distance = 5)))
-plot(var, separable_Vgm, scales=list(arrows=F, z = list(distance = 5)))
-plot(var, sumMetric_Vgm, wireframe=T, scales=list(arrows=F, z = list(distance = 5)))
-plot(var,metric_Vgm,wireframe=T, scales=list(arrows=F, z = list(distance = 5))) 
+plot(var, separable_Vgm, wireframe = T, scales=list(arrows=F, z = list(distance = 5)), main='Separable Model')
+plot(var, sumMetric_Vgm, wireframe=T, scales=list(arrows=F, z = list(distance = 5)), main='SumMetric Model')
+plot(var,metric_Vgm,wireframe=T, scales=list(arrows=F, z = list(distance = 5)), main='Metric Model') 
+plot(var,prodSumModel_Vgm,wireframe=T, scales=list(arrows=F, z = list(distance = 5)), main='Product Sum Model') 
 
 #### GENERATE MAPS ####
-xy = expand.grid(x=seq(2500, 6000, by=1), y=seq(1500,4000, by=1))
+xy = expand.grid(x=seq(2500, 5500, by=1), y=seq(1500,3700, by=1))
 xys = SpatialPoints(xy)
 gridded(xys) = TRUE
 proj4string(xys) = CRS("+init=epsg:3035 +units=km")
 timeDF = spTransform(timeDF, CRS("+init=epsg:3035 +units=km"))
 plot(xys, axes=T)
-points(as.data.frame(abpm10_log)[,4:5]*1000, col=2, pch=19)
+points(as.data.frame(abpm10_log)[,4:5], col=2, pch=19)
 
 
 eu = shapefile("Data//Euro//EClip.shp")
@@ -140,7 +149,7 @@ spl = list(spl1, spl2)
 labels1 <- layer(sp.text(coordinates(eu), txt = eu$CNTR_CODE, pos = 1))
 
 #### INTERPOLATE ####
-predicted <- krigeST(pm10.obs~1, data=timeDF, modelList=sumMetric_Vgm, newdata=grid.ST) 
+predicted <- krigeST(pm10.obs~1, data=timeDF, modelList=prodSumModel_Vgm, newdata=grid.ST, computeVar = TRUE) 
 predicted$var1.pred = exp(predicted$var1.pred)
 #abpm10.ST <- STFDF(xys, tm.grid, data.frame(pm10.inter = predicted$var1.pred))
 stplot(predicted, sp.layout = spl, scales=list(draw=TRUE), main="Kriged prediction") + labels1
